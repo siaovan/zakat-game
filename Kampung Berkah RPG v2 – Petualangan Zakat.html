@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kampung Berkah RPG – Petualangan Zakat</title>
+<style>
+:root{--bg:#eef4f7;--surf:#fff;--ink:#12303f;--mut:#52707e;--line:#cddde5;--ac:#14707a;--acl:#d6eef0;--sun:#e9a92f;--sunl:#fbefd0;--ok:#1c7a4d;--okl:#d8f0e2;--bad:#a8402f;--badl:#f8dfda;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1a26;--surf:#14283a;--ink:#e6f0f5;--mut:#9bb5c3;--line:#264257;--ac:#4cc2cc;--acl:#17404a;--sun:#f3bd52;--sunl:#3b3216;--ok:#5fcf97;--okl:#16392a;--bad:#f0907f;--badl:#42211c}}
+:root[data-theme="dark"]{--bg:#0c1a26;--surf:#14283a;--ink:#e6f0f5;--mut:#9bb5c3;--line:#264257;--ac:#4cc2cc;--acl:#17404a;--sun:#f3bd52;--sunl:#3b3216;--ok:#5fcf97;--okl:#16392a;--bad:#f0907f;--badl:#42211c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,sans-serif;-webkit-user-select:none;user-select:none}
+h2,h3{font-family:Palatino,Georgia,serif;margin:0 0 .4rem}
+.wrap{max-width:640px;margin:0 auto;padding:10px 12px 40px}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+#hud{font-weight:700;font-size:.9rem}
+.tb button,.btn{background:var(--ac);color:var(--bg);border:0;border-radius:10px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer;min-height:42px}
+.tb button+button{margin-left:6px}
+.btn.alt{background:transparent;color:var(--ac);border:1.5px solid var(--ac)}
+.stage{position:relative;border:3px solid var(--ink);border-radius:8px;overflow:hidden;background:#000}
+canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+#dlg{display:none;position:absolute;left:0;right:0;bottom:0;max-height:68%;overflow:auto;background:var(--surf);border-top:3px solid var(--ac);padding:10px 12px;font-size:.92rem;user-select:text}
+#dlg p{margin:2px 0 8px}
+.q{display:block;width:100%;text-align:left;margin:5px 0;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;font-size:.92rem;cursor:pointer;min-height:42px}
+.q:hover{border-color:var(--ac)}
+.note{border-left:4px solid var(--sun);background:var(--sunl);padding:8px 10px;border-radius:0 8px 8px 0;margin:8px 0;font-size:.88rem}
+#toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:6px 12px;border-radius:99px;font-size:.82rem;opacity:0;transition:opacity .25s;pointer-events:none;max-width:92%;text-align:center}
+.pad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,56px);gap:6px;justify-content:center;margin:12px 0}
+.pad button{border:2px solid var(--ink);background:var(--surf);color:var(--ink);border-radius:12px;font-size:1.4rem;touch-action:none}
+.pad .u{grid-column:2;grid-row:1}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
+.hint{text-align:center;color:var(--mut);font-size:.82rem}
+#ov{display:none;position:fixed;inset:0;background:rgba(5,15,25,.7);z-index:20;padding:14px;overflow:auto}
+#ov .box{max-width:560px;margin:0 auto;background:var(--surf);border-radius:14px;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700}
+.chip.ok{background:var(--okl);color:var(--ok)}.chip.ac{background:var(--acl);color:var(--ac)}.chip.no{background:var(--sunl);color:var(--mut)}
+.qi{border-bottom:1px solid var(--line);padding:8px 0}
+.qi small{display:block;color:var(--mut)}
+.disc{font-size:.78rem;color:var(--mut);text-align:center;margin-top:12px}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.stage{border-radius:14px;box-shadow:0 6px 0 var(--ink)}.bar2{display:inline-block;width:110px;height:12px;border:2px solid var(--ink);border-radius:8px;overflow:hidden;vertical-align:middle;background:var(--surf);margin-right:6px}.bar2 i{display:block;height:100%;background:linear-gradient(90deg,#e08a3a,#f3c64f)}.pf{display:flex;gap:10px;align-items:center;margin-bottom:4px}.pf span{font-size:2rem;background:var(--acl);border-radius:10px;padding:0 8px;line-height:1.5}.pf b{font-family:Palatino,Georgia,serif;font-size:1.05rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="bar"><div id="hud"></div><div class="tb"><button onclick="showMap()">Peta</button><button onclick="showQuests()">Tugas</button></div></div>
+<div class="stage"><canvas id="cv" width="448" height="288" aria-label="Peta permainan"></canvas><div id="toast"></div><div id="dlg"></div></div>
+<div class="pad" id="pad"><button class="u" data-k="u" aria-label="Atas">▲</button><button class="l" data-k="l" aria-label="Kiri">◀</button><button class="d" data-k="d" aria-label="Bawah">▼</button><button class="r" data-k="r" aria-label="Kanan">▶</button></div>
+<div class="hint">Gerak: tombol panah / WASD atau D-pad. Tabrak warga untuk berbicara. Jalan di atas benda untuk mengambilnya.</div>
+<p class="disc">Media pembelajaran, bukan fatwa. Semua tokoh dan angka bersifat fiktif.</p>
+</div>
+<div id="ov"><div class="box" id="ovb"></div></div>
+<script>
+var T=32,W=14,H=9,HARGA=1500000,cv=document.getElementById("cv"),cx=cv.getContext("2d");
+var rp=function(n){return "Rp"+n.toLocaleString("id-ID")};
+var STT=[["wajib","Wajib menurut pedoman game"],["belum","Belum wajib menurut pedoman game"],["bc","Informasi belum cukup"]];
+var GOL=[["fm","Fakir/Miskin"],["gh","Gharim"],["ib","Ibnu sabil"],["mu","Mualaf"],["bc","Informasi belum cukup"]];
+var I={h1:["📒","Buku kas: kas Rp60 jt + stok Rp120 jt = aset dagang Rp180 jt."],h2:["🧾","Nota utang: Rp30 jt jatuh tempo bulan ini."],h3:["📅","Catatan usaha: 14 bulan hijriah di atas nisab."],
+s1:["🪙","Emas batangan simpanan: 60 gram."],s2:["📜","Surat pembelian: emas disimpan sejak 3 tahun lalu."],
+j1:["💳","Buku tabungan: saldo Rp200 jt."],j2:["🗓️","Riwayat setoran: saldo terkumpul 8 bulan lalu."],
+r1:["🧵","Penghasilan menjahit sekitar Rp300 rb per bulan."],r2:["🏚️","Bu Ratna menumpang di rumah saudara."],r3:["👶","Bu Ratna menanggung dua cucu yatim."],
+a1:["📄","Surat utang: untuk biaya operasi anak, bukan maksiat."],a2:["📉","Seluruh aset Pak Anto sudah dijual, utang masih tersisa."],
+b1:["📖","Buku aturan: nisab 85 gram emas (acuan "+rp(HARGA)+"/g, ilustrasi); kadar perdagangan 2,5%; haul 1 tahun hijriah; mustahik 8 golongan (QS. At-Taubah: 60)."]};
+var Q={
+hasan:{name:"Pak Hasan",m:"Pasar",t:"calc",need:["h1","h2","h3"],res:"wajib",amt:3750000,amts:[4500000,3750000,3187500],intro:"Saya pemilik toko kelontong. Apakah saya wajib berzakat? Silakan periksa buku-buku saya.",
+x:"Dasar = 180 jt − 30 jt = Rp150 jt. Nisab = 85 g × Rp1.500.000 = Rp127,5 jt. Dasar ≥ nisab dan haul terpenuhi, maka zakat = 150 jt × 2,5% = Rp3.750.000. (Rp4.500.000 lupa mengurangi utang; Rp3.187.500 memakai nisab sebagai dasar.)",n:"Dasar hitung mengikuti pedoman game; rincian metode bisa berbeda antarpendapat."},
+sari:{name:"Bu Sari",m:"Pasar",t:"calc",need:["s1","s2"],res:"belum",intro:"Saya menyimpan emas batangan sejak lama. Sudah wajib zakat belum ya?",x:"Nisab emas 85 gram. Kepemilikan 60 gram di bawah nisab, jadi belum wajib meski disimpan 3 tahun.",n:"Emas perhiasan yang dipakai memiliki perbedaan pendapat dan tidak dibahas di sini."},
+joko:{name:"Pak Joko",m:"Pasar",t:"calc",need:["j1","j2"],res:"belum",intro:"Tabungan saya cukup besar. Apa sudah waktunya berzakat?",x:"Saldo Rp200 jt memang di atas nisab Rp127,5 jt, tetapi baru dimiliki 8 bulan. Haul belum genap, jadi belum wajib.",n:"Jangan menyimpulkan wajib hanya karena angkanya besar."},
+ratna:{name:"Bu Ratna",m:"Kampung",t:"cls",need:["r1","r2","r3"],res:"fm",intro:"Tetangga mencalonkan saya menerima zakat. Silakan verifikasi.",x:"Penghasilannya jauh dari mencukupi kebutuhan dasar dan ia menanggung dua cucu: sesuai ciri fakir/miskin.",n:"Pembedaan fakir dan miskin bergantung pedoman; game menerima keduanya."},
+anto:{name:"Pak Anto",m:"Kampung",t:"cls",need:["a1","a2"],res:"gh",intro:"Saya berutang dan sulit melunasi. Termasuk golongan apa saya?",x:"Gharim adalah orang berutang yang tidak mampu melunasi. Utangnya bukan untuk maksiat dan asetnya sudah habis.",n:"Syarat penting: utang bukan untuk maksiat."},
+rina:{name:"Rina",m:"Kampung",t:"cls",need:[],res:"bc",intro:"Kata teman, saya “kurang mampu”. Hanya itu yang kamu tahu, belum ada data penghasilan atau kebutuhan saya.",x:"Label dari teman bukan bukti. Tanpa data penghasilan dan kebutuhan, kategori belum bisa ditetapkan; langkah berikut adalah kunjungan verifikasi.",n:"Mengakui data belum cukup adalah keputusan yang sah."},
+amil:{name:"Ketua Amil",m:"Balai Desa",t:"x",need:[]}};
+var ORDER=["hasan","sari","joko","ratna","anto","rina","amil"];
+var M={
+pasar:{n:"Pasar Berkah",e:"🏪",s:[1,3],g:["##############","#..BBB..BBB..#","#..BBB..BBB..#","#............#","#.==========.#","#............#","#..BBB..~~...#","#..BBB..~~...#","##############"],
+npc:[["hasan",4,3,"👨‍🍳"],["sari",9,3,"👩"],["joko",10,6,"🧑‍💼"]],it:[["h1",1,5],["h2",6,4],["h3",6,7],["s1",12,2],["s2",11,5],["j1",12,6],["j2",7,1]]},
+kampung:{n:"Kampung Sejahtera",e:"🏘️",s:[1,4],g:["##############","#.BB.....BB..#","#.BB..~~.BB..#","#.....~~.....#","#.==========.#","#............#","#.BB.....BB..#","#.BB.....BB..#","##############"],
+npc:[["ratna",3,5,"👵"],["anto",10,5,"👨"],["rina",7,5,"👧"]],it:[["r1",1,3],["r2",4,3],["r3",5,2],["a1",11,3],["a2",12,5]]},
+balai:{n:"Balai Desa",e:"🕌",s:[7,6],g:["##############","#..BB....BB..#","#............#","#.==========.#","#............#","#............#","#............#","#............#","##############"],
+npc:[["amil",7,3,"🧔"]],it:[["b1",2,5]]}};
+var S={map:"pasar",got:{},q:{},kas:0},p={x:1,y:3,px:32,py:96,mv:false},D=null,CH=[],keys={},OV=false,tk=0;
+function total(){var t=0;ORDER.forEach(function(i){if(S.q[i])t+=S.q[i].sc});return t}
+function hud(){var q=Math.round(total()/7);document.getElementById("hud").innerHTML='<span class="bar2"><i style="width:'+q+'%"></i></span>☀ '+q+"% &nbsp;💰 "+rp(S.kas)}
+function toast(t){var e=document.getElementById("toast");e.textContent=t;e.style.opacity=1;clearTimeout(tk);tk=setTimeout(function(){e.style.opacity=0},2600)}
+function say(n,t,c){D={n:n,t:t,c:c};var d=document.getElementById("dlg");CH=c;d.style.display="block";d.innerHTML='<div class="pf"><span>'+(PO[n]||"🙂")+"</span><b>"+n+"</b></div><p>"+t+"</p>"+c.map(function(x,i){return '<button class="q" onclick="CH['+i+'][1]()">'+x[0]+"</button>"}).join("");d.scrollTop=0;keys={}}
+function closeD(){D=null;document.getElementById("dlg").style.display="none"}
+function talk(id){var q=Q[id];if(id==="amil")return balai();
+if(S.q[id])return say(q.name,"Terima kasih, petugas! Kasus saya sudah selesai.",[["Tutup",closeD]]);
+var got=q.need.filter(function(i){return S.got[i]}).length;
+var o=(q.t==="calc"?STT:GOL).map(function(a){return [a[1],function(){decide(id,a[0])}]});o.push(["Cari bukti dulu",closeD]);
+say(q.name,"“"+q.intro+"”"+(q.need.length?" <span class='chip ac'>Bukti: "+got+"/"+q.need.length+"</span>":""),o)}
+function decide(id,ch,a){var q=Q[id],all=q.need.every(function(i){return S.got[i]}),ok=ch===q.res;
+var back=[["Coba lagi",function(){talk(id)}],["Tutup",closeD]];
+if(ok&&all&&q.res==="wajib"&&a===undefined)return say(q.name,"Berapa zakat yang harus dikeluarkan?",q.amts.map(function(v){return [rp(v),function(){decide(id,ch,v===q.amt)}]}));
+if(!ok)return say(q.name,"<b>Belum tepat.</b> Periksa lagi bukti yang kamu kumpulkan.<div class='note'>"+q.x+"</div>",back);
+if(!all)return say(q.name,"<b>Kesimpulanmu benar, tetapi belum didukung bukti.</b> Kumpulkan semua bukti di sekitar dulu, lalu putuskan lagi.",[["Cari bukti",closeD]]);
+if(a===false)return say(q.name,"<b>Status benar, jumlah belum tepat.</b><div class='note'>"+q.x+"</div>",back);
+S.q[id]={sc:100};if(id==="hasan"){S.kas=q.amt;toast("Kas Pos Zakat +"+rp(q.amt))}
+say(q.name,"<b>Tepat dan didukung bukti! +100 poin.</b><div class='note'>"+q.x+"</div><div class='note'>"+q.n+"</div>",[["Lanjut",closeD]]);hud()}
+function balai(){var N="Ketua Amil";
+if(S.q.amil)return say(N,"Laporan penyaluran sudah tercatat. Terima kasih, petugas!",[["Tutup",closeD]]);
+if(!S.kas)return say(N,"Kas Pos Zakat masih kosong. Selesaikan kasus Pak Hasan di Pasar dengan benar dulu.",[["Tutup",closeD]]);
+if(!(S.q.ratna&&S.q.anto))return say(N,"Kas siap ("+rp(S.kas)+"), tetapi belum ada mustahik terverifikasi. Verifikasi warga di Kampung dulu.",[["Tutup",closeD]]);
+var E="Zakat hanya disalurkan kepada mustahik yang sudah terverifikasi (QS. At-Taubah: 60) dan tidak dibiarkan mengendap. Rina belum terverifikasi karena datanya belum ada.";
+say(N,"Kas kita "+rp(S.kas)+". Bagaimana menyalurkannya?",[
+["Bagi seluruhnya untuk Bu Ratna dan Pak Anto",function(){S.q.amil={sc:100};say(N,"<b>Tepat! +100 poin.</b><div class='note'>"+E+"</div>",[["Lanjut",closeD]]);hud()}],
+["Bagi untuk Bu Ratna, Pak Anto, dan Rina",function(){say(N,"<b>Belum tepat.</b><div class='note'>"+E+"</div>",[["Pilih lagi",balai]])}],
+["Simpan separuh dulu untuk acara desa",function(){say(N,"<b>Belum tepat.</b><div class='note'>Dana zakat tidak dialihkan ke kebutuhan di luar delapan golongan, dan sebaiknya segera disalurkan kepada yang berhak.</div>",[["Pilih lagi",balai]])}]])}
+function ov(h){document.getElementById("ovb").innerHTML=h;document.getElementById("ov").style.display="block";OV=true;keys={}}
+function closeOv(){document.getElementById("ov").style.display="none";OV=false}
+function warp(k){S.map=k;p={x:M[k].s[0],y:M[k].s[1],px:M[k].s[0]*T,py:M[k].s[1]*T,mv:false};closeD();closeOv();toast("Tiba di "+M[k].n)}
+function showMap(){var h="<h2>Pilih peta</h2>";Object.keys(M).forEach(function(k){var ids=ORDER.filter(function(i){return M[k].npc.some(function(n){return n[0]===i})}),d=ids.filter(function(i){return S.q[i]}).length;
+h+='<button class="q" onclick="warp(\''+k+'\')"><b>'+M[k].e+" "+M[k].n+"</b><br><small>Tugas selesai: "+d+"/"+ids.length+"</small></button>"});
+ov(h+'<p><button class="btn alt" onclick="closeOv()">Tutup</button></p>')}
+function showQuests(){var h="<h2>Daftar tugas</h2><p><b>Skor: "+total()+" / 700</b> &nbsp; Kas: "+rp(S.kas)+"</p>";
+ORDER.forEach(function(id){var q=Q[id],ev=q.need.filter(function(i){return S.got[i]});
+h+='<div class="qi"><b>'+q.name+'</b> <small style="display:inline">('+q.m+")</small> "+(S.q[id]?'<span class="chip ok">Selesai</span>':'<span class="chip no">Belum</span>')+
+(q.need.length?"<small>Bukti "+ev.length+"/"+q.need.length+"</small>":"")+ev.map(function(i){return "<small>"+I[i][0]+" "+I[i][1]+"</small>"}).join("")+"</div>"});
+h+='<div class="qi"><b>Buku aturan</b>'+(S.got.b1?"<small>"+I.b1[1]+"</small>":"<small>Cari buku 📖 di Balai Desa.</small>")+"</div>";
+ov(h+'<p><button class="btn alt" onclick="closeOv()">Tutup</button></p>')}
+function intro(){ov("<h2>Kampung Berkah</h2><p>Kamu petugas Pos Zakat. Jelajahi tiga peta, kumpulkan bukti, tanyai warga, lalu ambil keputusan sesuai aturan. Hasil zakat yang benar mengisi kas untuk disalurkan di Balai Desa.</p><p class='note'>Tabrak warga untuk berbicara. Jika bukti memang belum ada, “informasi belum cukup” bisa jadi jawaban yang benar.</p><p><button class='btn' onclick='showMap()'>Mulai petualangan</button></p>")}
+function solid(c){return "#~B".indexOf(c)>-1}
+function npcAt(x,y){var r=null;M[S.map].npc.forEach(function(n){if(n[1]===x&&n[2]===y)r=n[0]});return r}
+function step(dx,dy){FACE=dx<0?"l":dx>0?"r":dy<0?"u":"d";var m=M[S.map],nx=p.x+dx,ny=p.y+dy;if(nx<0||ny<0||nx>=W||ny>=H)return;var n=npcAt(nx,ny);if(n)return talk(n);if(solid(m.g[ny][nx]))return;p.x=nx;p.y=ny;p.mv=true}
+function arrive(){M[S.map].it.forEach(function(t){if(t[1]===p.x&&t[2]===p.y&&!S.got[t[0]]){S.got[t[0]]=1;burst(p.x*T+16,p.y*T+16,"#ffd75e",16);toast(I[t[0]][0]+" "+I[t[0]][1])}})}
+var PT=[],FACE="d",WALK=0,VG=null;
+var NS={hasan:["#d9822b","#3a2a1a","#f0c8a0"],sari:["#b0488f","#2a1a1a","#f0c8a0"],joko:["#3a5fa8","#222","#d9a67a"],ratna:["#7d8a3c","#d5d5d5","#e2b48c"],anto:["#8a5a3a","#1a1a1a","#d9a67a"],rina:["#c9507a","#3a1f12","#f0c8a0"],amil:["#f4f4f4","#5a5a5a","#d9a67a"]};
+var PO={"Pak Hasan":"👨‍🍳","Bu Sari":"👩","Pak Joko":"🧑‍💼","Bu Ratna":"👵","Pak Anto":"👨","Rina":"👧","Ketua Amil":"🧔"};
+function burst(x,y,c,n){for(var i=0;i<n;i++){var a=Math.random()*6.28,v=.6+Math.random()*1.8;PT.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,l:28+Math.random()*14,c:c})}}
+function hs(x,y){return (x*73856093^y*19349663)&7}
+function R(c,x,y,w,h){cx.fillStyle=c;cx.fillRect(x,y,w,h)}
+function em(e,x,y,s){cx.font=(s||24)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';cx.textAlign="center";cx.textBaseline="middle";cx.fillText(e,x,y)}
+function tile(c,x,y,t,g){var X=x*T,Y=y*T,h=hs(x,y);
+if(c==="~"){R("#2f6fbf",X,Y,T,T);R("#4f93dd",X,Y,T,12);var w=Math.sin(t/400+x+y)*3;R("#9cc8f5",X+6+w,Y+8,10,2);R("#9cc8f5",X+16-w,Y+20,9,2);return}
+if(c==="="){R("#cdb27a",X,Y,T,T);R("#b99c62",X,Y+T-3,T,3);R("#dcc58f",X+2,Y+2,12,10);R("#bfa56d",X+17,Y+4,11,9);R("#dcc58f",X+5+h,Y+17,13,10);return}
+R((x+y)&1?"#6dba58":"#74c25f",X,Y,T,T);R("#5aa848",X+3+h*3,Y+7+h,2,5);R("#5aa848",X+5+h*3,Y+9+h,2,4);
+if(h===1){R("#fff",X+21,Y+22,3,3);R("#f2b84b",X+22,Y+23,1,1)}if(h===5)R("#f58fb0",X+8,Y+21,3,3);
+if(c==="B"){var up=y>0&&g[y-1][x]==="B";R("#c98a5a",X,Y,T,T);R("#b2764a",X,Y+9,T,2);R("#b2764a",X,Y+20,T,2);R("#8a5a36",X,Y+T-3,T,3);
+if(!up){R("#a5392f",X,Y,T,13);R("#c74a3d",X,Y,T,4);R("#7e2a23",X,Y+10,T,3)}
+else if(h<3){R("#6b3f1f",X+8,Y+6,16,26);R("#8a5a36",X+10,Y+8,12,24);R("#f2c14e",X+19,Y+20,2,2)}
+else{R("#6b3f1f",X+7,Y+8,18,14);R("#bfe3f5",X+9,Y+10,14,10);R("#fff",X+10,Y+11,4,3);R("#6b3f1f",X+15,Y+10,2,10)}}
+else if(c==="#"){R("rgba(0,0,0,.2)",X+3,Y+25,26,5);R("#6b4a2b",X+13,Y+18,6,13);R("#2d7a33",X+3,Y+4,26,18);R("#3f9a3f",X+6,Y+1,20,10);R("#58b552",X+9,Y+3,8,5);R("#256a2b",X+3,Y+16,26,6)}}
+function chr(X,Y,k,dir,w){var c=NS[k]||["#14a3b0","#4a2f1b","#e0ac84"],l=Math.sin(w)*3;
+R("rgba(0,0,0,.28)",X+7,Y+28,18,4);
+R("#2d3a7a",X+10,Y+22-(l>0?l:0),5,8);R("#2d3a7a",X+17,Y+22+(l<0?l:0),5,8);
+R(c[0],X+9,Y+13,14,10);R("rgba(255,255,255,.2)",X+9,Y+13,14,3);R("rgba(0,0,0,.15)",X+9,Y+20,14,3);
+R(c[2],X+5,Y+13+l*.5,4,9);R(c[2],X+23,Y+13-l*.5,4,9);
+R(c[2],X+10,Y+2,12,11);R(c[1],X+10,Y+2,12,dir==="u"?11:4);
+if(dir!=="u"){var e="#12303f";if(dir==="l")R(e,X+11,Y+7,2,3);else if(dir==="r")R(e,X+19,Y+7,2,3);else{R(e,X+12,Y+7,2,3);R(e,X+18,Y+7,2,3)}}}
+function draw(t){var m=M[S.map],g=m.g,pr=Math.min(1,total()/700);
+for(var y=0;y<H;y++)for(var x=0;x<W;x++)tile(g[y][x],x,y,t,g);
+m.it.forEach(function(i){if(S.got[i[0]])return;var X=i[1]*T+16,Y=i[2]*T+17+Math.sin(t/300+i[1])*2;cx.fillStyle="rgba(255,226,110,"+(.28+.12*Math.sin(t/200))+")";cx.beginPath();cx.arc(X,Y+2,15,0,6.3);cx.fill();em(I[i[0]][0],X,Y,22)});
+m.npc.forEach(function(n){var X=n[1]*T,Y=n[2]*T,near=Math.abs(n[1]-p.x)+Math.abs(n[2]-p.y)<=2;
+chr(X,Y,n[0],near?(n[1]<p.x?"r":n[1]>p.x?"l":n[2]<p.y?"d":"u"):"d",0);
+if(n[0]!=="amil"||S.kas)em(S.q[n[0]]?"✅":"❗",X+16,Y-5+Math.sin(t/250)*2,14);
+if(near){cx.font="bold 10px sans-serif";cx.textAlign="center";cx.lineWidth=3;cx.strokeStyle="#0b1d2a";cx.strokeText(Q[n[0]].name,X+16,Y-17);cx.fillStyle="#fff";cx.fillText(Q[n[0]].name,X+16,Y-17)}});
+chr(p.px,p.py,null,FACE,p.mv?WALK:0);
+if(p.mv&&Math.random()<.35)PT.push({x:p.px+14+Math.random()*4,y:p.py+28,vx:(Math.random()-.5)*.6,vy:-.3,l:14,c:"rgba(235,220,170,.85)"});
+for(var i=PT.length-1;i>=0;i--){var q=PT[i];q.x+=q.vx;q.y+=q.vy;q.vy+=.06;if(--q.l<=0){PT.splice(i,1);continue}cx.globalAlpha=Math.min(1,q.l/14);R(q.c,q.x,q.y,3,3)}cx.globalAlpha=1;
+cx.globalCompositeOperation="multiply";cx.fillStyle="rgb(255,"+(205+50*pr|0)+","+(180+75*pr|0)+")";cx.fillRect(0,0,448,288);cx.globalCompositeOperation="source-over";
+if(!VG){VG=cx.createRadialGradient(224,144,110,224,144,270);VG.addColorStop(0,"rgba(0,0,0,0)");VG.addColorStop(1,"rgba(0,0,0,.4)")}
+cx.fillStyle=VG;cx.fillRect(0,0,448,288);
+for(var k=0;k<10;k++)R("rgba(255,255,255,.55)",(k*97+t/45*(.5+k%3*.3))%448,(k*53+t/70+Math.sin(t/600+k)*12)%288,2,2)}
+function loop(t){if(!D&&!OV&&!p.mv){var dx=keys.l?-1:keys.r?1:0,dy=!dx?(keys.u?-1:keys.d?1:0):0;if(dx||dy)step(dx,dy)}
+if(p.mv){WALK+=.4;p.px+=Math.sign(p.x*T-p.px)*4;p.py+=Math.sign(p.y*T-p.py)*4;if(p.px===p.x*T&&p.py===p.y*T){p.mv=false;arrive()}}
+draw(t);requestAnimationFrame(loop)}
+var KM={ArrowLeft:"l",a:"l",A:"l",ArrowRight:"r",d:"r",D:"r",ArrowUp:"u",w:"u",W:"u",ArrowDown:"d",s:"d",S:"d"};
+document.addEventListener("keydown",function(e){var k=KM[e.key];if(k){keys[k]=1;e.preventDefault()}});
+document.addEventListener("keyup",function(e){var k=KM[e.key];if(k)delete keys[k]});
+document.querySelectorAll("#pad button").forEach(function(b){var k=b.dataset.k;
+b.addEventListener("pointerdown",function(e){e.preventDefault();keys[k]=1});
+["pointerup","pointerleave","pointercancel"].forEach(function(ev){b.addEventListener(ev,function(){delete keys[k]})})});
+hud();intro();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
